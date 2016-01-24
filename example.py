@@ -1,23 +1,33 @@
 from fastsnmpy import SnmpSession
-""" EXAMPLE CODE  """
 
-if __name__ == "__main__":
-    #clients and Oids
-    hosts =[]
-    srcfile = open("hosts")
-    for line in srcfile.readlines():
-        hosts.append(line.rstrip('\n'))
-    srcfile.close()    
-    oids = ['ifName']
+'''
+This example demonstrates the usage of snmpwalk, and snmpbulkwalk 
+methods of fastsnmpy package.
 
-    newsession = SnmpSession ( targets = hosts, 
-            oidlist = oids,
-            community='oznet' 
-            )
-#    results = newsession.bulkwalk()   # For seqwalk -default
-    results = newsession.multiwalk(mode = 'bulkwalk')
-    for vb in results:
-        print vb.__dict__
+snmpwalk, just provides an interface to net-snmp's python-bindings.
+On top of it, this also provides a way to run queries in parallel
+using multiple workers. This greatly speeds up snmpwalk's operation.
+
+snmpbulkwalk, is a fastsnmpy method. By performing get-operations 
+in bulk, it greatly enhances the speed of snmpwalk. It also reduces
+the number of packets sent to/from the end device, thereby 
+decreasing chattiness of the session. 
+This method also supports the 'workers' attribute, to parallelize 
+snmpbulkwalk operations for a much quicker run.
+'''
 
 
-"""    EXAMPLE CODE ENDS """
+if __name__ == '__main__':
+
+    hosts =['c7200-2','c7200-1','c2600-1','c2600-2']
+    oids = ['ifDescr', 'ifIndex', 'ifName', 'ifDescr']
+
+    newsession = SnmpSession ( targets = hosts,
+        oidlist = oids,
+        community='oznet'
+    )
+
+#    print newsession.snmpwalk(workers=5)  # For snmpwalk -default
+
+    print newsession.snmpbulkwalk(workers=15) # Fastsnmpy - bulkwalk
+

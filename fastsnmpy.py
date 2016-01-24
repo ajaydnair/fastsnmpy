@@ -29,7 +29,8 @@ PROVIDES METHODS:
 # -------
 
 import netsnmp
-from multiprocessing import Process, Queue
+from multiprocessing import Queue, Pool
+import json
 
 
 # -------
@@ -46,8 +47,7 @@ class SnmpSession:
         version = 2,
         targets = [''],
         community = 'public',
-        maxreps = 8,
-    ):
+        maxreps = 8,):
 
         self.oidlist = oidlist    
         self.version = version
@@ -57,191 +57,172 @@ class SnmpSession:
         self.results = []
 
 
-    def snmpwalk(self):
+    def snmpwalk(self, workers = 1):
 
         ''' This is the most basic walk. It runs the default 
         snmpwalk from netsnmp's python bindings '''
 
-        for target in self.targets:
-            for oid in self.oidlist:
+        return self._run_queries( worker_snmpwalk, workers )
 
-                print 'Getting %s from %s ' %(oid,target)
-
-                # -- query each node-mib combo, and pop into results
-                mysession = netsnmp.Session(
-                    Version = self.version,
-                    DestHost = target,
-                    Community = self.community
-                )
-                
-                vars = netsnmp.VarList( netsnmp.Varbind(oid))
-                result = mysession.walk(vars)
-
-                # -- Format and returns result
-                for i in vars:
-                    i.hostname = target
-                    i.oid = oid
-                    self.results.append(i)
-
-        return self.results
-
-
-    def snmpbulkwalk(self):
+       
+    def snmpbulkwalk(self, workers = 1):
 
         ''' Bulkwalk is essentially a series of getBulk operations, just
         like walk is a series of get(getNext) operations.
 
-        This is where the power and speed of fastsnmpy shows, as this method
-        is missing from native net-snmp python bindings '''
+        This is where the power and speed of fastsnmpy shows, as native 
+        net-snmp bindings have no equivalent'''
 
+        return self._run_queries( worker_snmpbulkwalk, workers )
+
+
+    def _run_queries(self, mode, processes):
+
+        in_list = self._build_input_list()
+        out_q = Queue() 
+
+        print 'Starting worker pool with %s processes' %int(processes)
+        worker_pool = Pool(processes = int(processes))
+        worker_pool.map_async(mode, in_list, callback=out_q.put)
+        worker_pool.close()
+        worker_pool.join()
+
+        return _parse_results(out_q)
+
+
+    def _build_input_list(self):
+
+        in_q = []
+ 
         for target in self.targets:
             for oid in self.oidlist:
-
-                print 'Getting %s from %s ' %(oid,target)
-
-                # -- query each node-mib combo, and pop into results
-                mysession = netsnmp.Session(
-                    Version = self.version,
-                    DestHost = target,
-                    Community = self.community
-                )
-                
-                # Start from ifindex 0, and use getbulk operations
-                startindex = 0
-
-                thistree = oid
-                while (thistree == oid):
-
-                    vars = netsnmp.VarList(netsnmp.Varbind(oid,startindex))
-                    result = mysession.getbulk(0,self.maxreps,vars)
-
-                    for i in vars:
-                        if i.tag == thistree:
-                            i.hostname = target
-                            i.oid = oid
-                            self.results.append(i)
-
-                    # If startindex is null ( Bug Fix )
-                    if not vars[-1].iid: break
-
-                    # Refresh thistree name and increment startindex
-                    else:
-                      thistree = vars[-1].tag
-                      startindex = int(vars[-1].iid)
-
-                    # If startindex still 0 ( Bug Fix for 6500s )
-                    if startindex == 0 : break
-
-                    # -- Format and returns result
-                    for i in vars:
-                      i.hostname = target
-                      i.oid = oid
-                      self.results.append(i)
-
-        return self.results
-
-
-
-
-'''    
+                entity = { 'target':target, 'oid':oid, 'version':self.version,
+                    'community':self.community, 'maxreps':self.maxreps }
+                in_q.append(entity)
+       
+        return in_q
     
-  def multiwalk(self,mode = 'snmpwalk'):
 
-    ### Define number of threads
-    hosts = self.targets
-    numthreads = len(hosts)
 
-    for thisoid in self.oidlist:
-      #Create queues for threadinput and threadoutput
-      threadinput = Queue()
-      threadoutput = Queue()
-      #put each targethost into the queue
-      for target in self.targets:
-        threadinput.put(target)
-      #Call the thread worker process on the queue for as many targets
-      for i in range(numthreads):
-        Process(target=self.multiworker, 
-            args=(threadinput, threadoutput,thisoid,mode)).start()
-      #Collect results from threads
-      for i in range(numthreads):
-        myresp = threadoutput.get()
-        for resp in myresp:
-          self.results.append(resp)
-      #Tell child processes to stop
-      for i in range(numthreads):
-        threadinput.put('STOP')
-        print 'Stopping %s' %i
+# ---------
+# FUNCTIONS
+# ---------
 
-    return self.results  
-      
-  # Function run by worker processes
-  def multiworker(caller,input, output, oid, mode):
-    for target in iter(input.get, 'STOP'):
-      print 'Getting %s from %s ' %(oid,target)
-      threadresults = []
-      mysession = netsnmp.Session(
-                Version = caller.version,
-                DestHost = target,
-                Community = caller.community
-                    )
-      if mode == 'snmpwalk':
-        # For snmpwalk mode, we just call netsnmp's implementn
-        vars = netsnmp.VarList(
-            netsnmp.Varbind(oid)
-            )
-        result = mysession.walk(vars)
+
+def worker_snmpbulkwalk(entity):
+
+    ''' worker called by snmpbulkwalk function. operates on a single
+    node-mib object '''
+
+    target = entity['target']
+    oid = entity['oid']
+    maxreps = entity['maxreps']
+
+    print 'Getting %s from %s ' %(oid,target)
+    mysession = netsnmp.Session(
+        Version = entity['version'],
+        DestHost = target,
+        Community = entity['community']
+    )
+        
+    results = []
+
+    # Start from ifindex 0, and use getbulk operations
+    startindex = 0
+
+    thistree = oid
+    while (thistree == oid):
+
+        vars = netsnmp.VarList(netsnmp.Varbind(oid,startindex))
+        result = mysession.getbulk(0,maxreps,vars)
+
         for i in vars:
-          i.hostname = target
-          i.oid = oid
-          threadresults.append(i)
-
-      if mode == 'bulkwalk':
-        # Our custom method to do bulkwalks, very speedy!
-        startindex = 0
-        thistree = oid
-        while (thistree == oid):
-          vars = netsnmp.VarList(
-              netsnmp.Varbind(oid,startindex)
-              )
-          result = mysession.getbulk(0,caller.maxreps,vars)
-          for i in vars:
             if i.tag == thistree:
-              i.hostname = target
-              i.oid = oid
-              threadresults.append(i)
-          # If startindex is null ( Bug Fix )
-          if not vars[-1].iid:
-            break
-          # Refresh thistree name and increment startindex
-          else:
+                i.hostname = target
+                i.oid = oid
+                results.append(i)
+
+        # If startindex is null ( Bug Fix )
+        if not vars[-1].iid: break
+
+        # Refresh thistree name and increment startindex
+        else:
             thistree = vars[-1].tag
             startindex = int(vars[-1].iid)
-          # If startindex still 0 ( Bug Fix for 6500s )
-          if startindex == 0 :
-            break
 
-      output.put(threadresults)
+        # If startindex still 0 ( Bug Fix for 6500s )
+        if startindex == 0 : break
+
+        # -- Format and returns result
+        for i in vars:
+            i.hostname = target
+            i.oid = oid
+            results.append(i)
+
+    return results
+
+
+
+def worker_snmpwalk(entity):
+
+    ''' worker called by snmpwalk function. operates on a single
+    node-mib object '''
+
+    target = entity['target']
+    oid = entity['oid']
+
+    print 'Getting %s from %s ' %(oid,target)
+
+    mysession = netsnmp.Session(
+        Version = entity['version'],
+        DestHost = target,
+        Community = entity['community']
+    )
+        
+    vars = netsnmp.VarList( netsnmp.Varbind(oid))
+    result = mysession.walk(vars)
+
+    # -- Format and returns result
+    results = []
+    for i in vars:
+        i.hostname = target
+        i.oid = oid
+        results.append(i)
+
+    return results
+
+
+def _parse_results(q):
+
+    results = []
+
+    for vb_list in q.get():
+        for vb in vb_list:
+           results.append(vb.__dict__)
+
+    return json.dumps(results, indent=2)
+
+
 '''
-
-''' Actual code begins below this line. The classes above dont need
+EXAMPLE :
+Actual code begins below this line. The classes above dont need
 to be modified. They can just be copied and pasted .
 Installation is a much cleaner way though. 
-You can see the documentation at http://www.ajaydivakaran.com/fastsnmpy'''
-
+You can see the documentation at http://www.ajaydivakaran.com/fastsnmpy
 
 if __name__ == '__main__':
-    #clients and Oids
+
     hosts =['c7200-2','c7200-1','c2600-1','c2600-2']
-    oids = ['ifDescr']
+    oids = ['ifDescr', 'ifIndex', 'ifName', 'ifDescr']
 
     newsession = SnmpSession ( targets = hosts, 
         oidlist = oids,
         community='oznet' 
     )
 
-    results = newsession.snmpbulkwalk()  # For snmpwalk -default
-    #  results = newsession.multiwalk(mode = 'bulkwalk')
-    for vb in results:
-        print vb.__dict__
+    print newsession.snmpwalk(workers=5)  # For snmpwalk -default
 
+    print newsession.snmpbulkwalk() # Fastsnmpy - bulkwalk
+
+'''
 
