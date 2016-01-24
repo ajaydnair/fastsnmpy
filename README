@@ -1,0 +1,94 @@
+		     		fastsnmpy README
+			Python classes that extend the 
+		Functionality of 'netsnmp' Extension Module
+
+### Main Features
+
+Fastsnmpy is a bunch of classes that create a wrapper around the
+existing python extensions for netsnmp. It provides the following :-
+- Ability to snmpbulkwalk devices, which makes it several magnitudes 
+  faster than today's implementation of snmpwalk.
+- snmpmultiwalk, which provides an asynchronous multithreaded way 
+  to walk nodes, resulting in several devices being walked at the 
+  same time, effectively using all cores on a multicore machine.
+- One-Line, and Two-Line scripts that enable you to discover/walk
+  all devices in a whole datacenter
+- Both Linux and Windows support
+
+
+### Benchmarks
+(1) Walking 30 nodes for ifDescr using native bindings, sequentially:
+	
+	time ./fastsnmpy.py
+	real    0m18.63s
+	user    0m1.07s
+	sys     0m0.38s
+
+(2) Walking 30 nodes for ifDescr using fastsnmpy's bulkwalk
+
+	time ./fastsnmpy.py (maxreps = 16)
+	real    0m9.17s
+	user    0m0.48s
+	sys     0m0.11s
+
+(3) Walking 30 nodes for ifDescr using fastsnmpy's multiwalk
+
+	time ./fastsnmpy.py (Multiwalk seq mode)
+	real    0m2.27s
+	user    0m2.87s
+	sys     0m0.66s
+
+	time ./fastsnmpy.py (Multiwalk bulk mode)
+	real    0m0.90s
+	user    0m2.44s
+	sys     0m0.40s
+
+As you can see, fastsnmpy's multiwalk mode is almost 20 times faster 
+than using python's native snmp bindings for walking
+	
+
+### Requirements:
+fastsnmpy module makes use of net-snmp and python extensions for 
+net-snmp. To use these classes, all you need to do is install net-snmp
+along with python bindings.
+Please review the LICENSE agreements for both, that are available from 
+their respective websites.
+
+There are two ways to install this.
+(1) You can just copy all the classes in the code and paste it into
+your script. This provides a quick, but very dirty way of using fastsnmpy
+(2) Download the fastsnmpy distribution, and install it as follows. This
+is the neatest method to use fastsnmpy:
+	- untar the download
+	- navigate to the directory
+	- run "python setup.py install"
+If you get stuck at any point, refer to the online documentation.
+http://www.ajaydivakaran.com/fastsnmpy
+
+
+### Release:
+The most recent release should be available from PyPy, or from the 
+author's website at http://www.ajaydivakaran.com/fastsnmpy
+
+
+### How to use
+See example.py included with this build. I plan to put up more examples
+on the website. So you may want to check there as well. 
+
+
+### Acknowledgments:
+The net-snmp-coders and the authors of 'python netsnmp extension'
+Thanks in advance to any who supply patches, suggestions and feedback.
+
+### License:
+
+          fastsnmpy classes for 'netsnmp extension module'
+                    Copyright (c) 2010 Ajay Divakaran
+'fastsnmpy' is free to use . However, please retain the above copyright 
+notice with your distributions. 
+
+Additional requirements : You need to have netsnmp and the python 'netsnmp'
+modules installed. All License terms of those packages should be followed. 
+Please read  and review license terms for python 'netsnmp' extension module
+and net-snmp itself.
+

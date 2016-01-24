@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: fastsnmpy
+Version: 1.0.3
+Summary: common classes extending netsnmp bindings
+Home-page: http://www.ajaydivakaran.com/fastsnmpy
+Author: Ajay Divakaran
+Author-email: ajay@ajaydivakaran.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
