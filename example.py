@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 from fastsnmpy import SnmpSession
 """ EXAMPLE CODE  """
 
@@ -9,11 +8,11 @@ if __name__ == "__main__":
     for line in srcfile.readlines():
         hosts.append(line.rstrip('\n'))
     srcfile.close()    
-    oids = ['ifDescr']
+    oids = ['ifName']
 
     newsession = SnmpSession ( targets = hosts, 
             oidlist = oids,
-            community='robotech' 
+            community='oznet' 
             )
 #    results = newsession.bulkwalk()   # For seqwalk -default
     results = newsession.multiwalk(mode = 'bulkwalk')

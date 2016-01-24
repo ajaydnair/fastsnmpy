@@ -176,7 +176,7 @@ if __name__ == "__main__":
 
     newsession = SnmpSession ( targets = hosts, 
             oidlist = oids,
-            community='robotech' 
+            community='oznet' 
             )
 #    results = newsession.bulkwalk()   # For seqwalk -default
     results = newsession.multiwalk(mode = 'bulkwalk')
