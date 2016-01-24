@@ -1,8 +1,8 @@
 from distutils.core import setup
 
 setup(
-        name            = 'fastsnmpy',
-        version         = '2.1.1',
+        name            = 'fastsnmpy2',
+        version         = '1.2.1',
         py_modules      = ['fastsnmpy','example'],
         author          = 'Ajay Divakaran',
         author_email    = 'ajaysdesk@gmail.com',
