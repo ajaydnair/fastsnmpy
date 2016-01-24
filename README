@@ -39,7 +39,7 @@ It provides the following methods as of Fastsnmpy-1.2.1
 
 
 ### Quick example - Running in interactive mode
-
+<pre>
 Python 2.7.10 (default) 
 
 >>> import netsnmp
@@ -53,7 +53,7 @@ Python 2.7.10 (default)
 >>> len(results)
 171031
 >>> 
-
+</pre>
 Note: To use the module in scripts, please see the example.py 
 included with the package.
 
