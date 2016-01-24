@@ -1,0 +1,218 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Fastsnmpy by ajaysdesk</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Fastsnmpy</h1>
+        <p>Superfast snmpbulkwalk in python</p>
+
+        <p class="view"><a href="https://github.com/ajaysdesk/fastsnmpy">View the Project on GitHub <small>ajaysdesk/fastsnmpy</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/ajaysdesk/fastsnmpy/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/ajaysdesk/fastsnmpy/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/ajaysdesk/fastsnmpy">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <pre><code>                fastsnmpy README
+        Python classes that extend the 
+    Functionality of 'netsnmp' Extension Module
+</code></pre>
+
+<h3>
+<a id="main-features" class="anchor" href="#main-features" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Main Features</h3>
+
+<p>Fastsnmpy is a module that leverages python-extensions that come 
+with net-snmp and provide highly parallelized faster-methods to walk
+oid-trees on devices.</p>
+
+<p>In addition, it provides a method to bulkwalk mib-trees. BulkWalk 
+methods are missing from native python-bindings for net-snmp. By 
+creating a wrapper around the GetBulk method instead, and maintaining 
+state while traversing the oid-tree, fastsnmpy provides a clever 
+solution to bulkwalk oids much faster.</p>
+
+<p>It provides the following methods as of Fastsnmpy-1.2.1</p>
+
+<ul>
+<li><p>snmpwalk(): Native python-bindings distributed with
+net-snmp, combined with fastsnmpy's ability to parallelize
+snmpwalk operations. </p></li>
+<li>
+<p>snmpbulkwalk(): Ability to snmpbulkwalk devices, which makes 
+it several magnitudes faster than net-snmp's implementation of snmpwalk.</p>
+
+<p>By leveraging the getbulk method, this module provides a quick 
+snmpbulkwalk utility.</p>
+</li>
+<li><p>PROCESS-POOLS: By passing in a 'workers=n' attribute to the above 
+methods, fastsnmpy can instantiate a process-pool to parallelize 
+the snmpwalk and snmpbulkwalk methods, resulting in several devices 
+being walked at the same time, 
+effectively using all cores on a multicore machine.</p></li>
+<li><p>One-Line, and Two-Line scripts that enable you to discover/walk
+all devices in a whole datacenter</p></li>
+<li><p>Both Linux and Windows support</p></li>
+</ul>
+
+<h3>
+<a id="quick-example---running-in-interactive-mode" class="anchor" href="#quick-example---running-in-interactive-mode" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Quick example - Running in interactive mode</h3>
+
+<pre>
+Python 2.7.10 (default) 
+
+&gt;&gt;&gt; import netsnmp
+&gt;&gt;&gt; from fastsnmpy import SnmpSession
+
+&gt;&gt;&gt; hosts =['c7200-2','c7200-1','c2600-1','c2600-2']
+&gt;&gt;&gt; oids = ['ifDescr', 'ifIndex', 'ifName', 'ifDescr']
+&gt;&gt;&gt; newsession = SnmpSession ( targets = hosts, oidlist = oids, community='oznet' )
+
+&gt;&gt;&gt; results = newsession.snmpbulkwalk(workers=15)
+&gt;&gt;&gt; len(results)
+171031
+&gt;&gt;&gt; 
+</pre>
+
+<p>Note: To use the module in scripts, please see the example.py 
+included with the package.</p>
+
+<h3>
+<a id="benchmarks" class="anchor" href="#benchmarks" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Benchmarks</h3>
+
+<p>(1) Walking 30 nodes for ifDescr using snmpwalk():</p>
+
+<pre><code>time ./fastsnmpy.py
+real    0m18.63s
+user    0m1.07s
+sys     0m0.38s
+</code></pre>
+
+<p>(2) Walking 30 nodes for ifDescr using snmpbulkwalk():</p>
+
+<pre><code>time ./fastsnmpy.py
+real    0m9.17s
+user    0m0.48s
+sys     0m0.11s
+</code></pre>
+
+<p>(3) Walking 30 nodes for ifDescr using snmpwalk(workers=10):</p>
+
+<pre><code>time ./fastsnmpy.py
+real    0m2.27s
+user    0m2.87s
+sys     0m0.66s
+</code></pre>
+
+<p>(4) Walking 30 nodes for ifDescr using snmpbulkwalk(workers=10):</p>
+
+<pre><code>time ./fastsnmpy.py
+real    0m0.90s
+user    0m2.44s
+sys     0m0.40s
+</code></pre>
+
+<p>As you can see, fastsnmpy's bulkwalk mode is almost 20 times faster 
+than using python's native snmp bindings for walking</p>
+
+<h3>
+<a id="requirements" class="anchor" href="#requirements" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Requirements:</h3>
+
+<p>fastsnmpy module makes use of net-snmp and python extensions for 
+net-snmp. To use these classes, all you need to do is install net-snmp
+along with python bindings.
+Please review the LICENSE agreements for both, that are available from 
+their respective websites.</p>
+
+<p>There are two ways to install this.
+(1) You can just copy all the classes in the code and paste it into
+your script. This provides a quick, but very dirty way of using fastsnmpy
+(2) Download the fastsnmpy distribution, and install it as follows. This
+is the neatest method to use fastsnmpy:
+    - untar the download
+    - navigate to the directory
+    - run "python setup.py install"
+If you get stuck at any point, refer to the online documentation.
+<a href="http://www.ajaydivakaran.com/fastsnmpy">http://www.ajaydivakaran.com/fastsnmpy</a></p>
+
+<h3>
+<a id="release" class="anchor" href="#release" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Release:</h3>
+
+<p>The most recent release should be available from PyPy, or from the 
+author's website at <a href="http://www.ajaydivakaran.com/fastsnmpy">http://www.ajaydivakaran.com/fastsnmpy</a></p>
+
+<h3>
+<a id="how-to-use" class="anchor" href="#how-to-use" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How to use</h3>
+
+<p>See example.py included with this build. I plan to put up more examples
+on the website. So you may want to check there as well. </p>
+
+<h3>
+<a id="acknowledgments" class="anchor" href="#acknowledgments" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Acknowledgments:</h3>
+
+<p>The net-snmp-coders and the authors of 'python netsnmp extension'
+Thanks in advance to any who supply patches, suggestions and feedback.</p>
+
+<h3>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License:</h3>
+
+<pre><code>      fastsnmpy classes for 'netsnmp extension module'
+                Copyright (c) 2010-2016 Ajay Divakaran
+</code></pre>
+
+<p>'fastsnmpy' is free to use . This includes the classes and modules of 
+fastsnmpy as well as any examples and code contained in the package.
+I am hereby releasing this under BSD, which is the most permissive form
+of licensing - giving you the freedom to do what you want with this code.</p>
+
+<p>A linkback would be appreciated to <a href="http://www.ajaydivakaran.com">www.ajaydivakaran.com</a>.</p>
+
+<p>Copyright (c)  </p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining 
+a copy of this software and associated documentation files 
+(the “Software”), to deal in the Software without restriction, 
+including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, 
+and to permit persons to whom the Software is furnished to do so, 
+subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included 
+in all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS 
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR 
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR 
+OTHER DEALINGS IN THE SOFTWARE. 3</p>
+
+<p>Additional requirements : You need to have netsnmp and the python 'netsnmp'
+modules installed. All License terms of those packages should be followed. 
+Please read  and review license terms for python 'netsnmp' extension module
+and net-snmp itself.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/ajaysdesk">ajaysdesk</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
