@@ -16,7 +16,8 @@ if __name__ == "__main__":
             )
 #    results = newsession.bulkwalk()   # For seqwalk -default
     results = newsession.multiwalk(mode = 'bulkwalk')
-    for identifier,eachline in results.iteritems():
-        print identifier,eachline.tag,eachline.iid,eachline.val
+    for vb in results:
+        print vb.__dict__
+
 
 """    EXAMPLE CODE ENDS """

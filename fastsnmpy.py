@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 
 """ fastsnmpy is a collection of classes that greatly increase
 the speed of snmp discovery, providing methods like snmpbulkwalk
@@ -167,11 +166,10 @@ to be modified. They can just be copied and pasted .
 Installation is a much cleaner way though. 
 You can see the documentation at http://www.ajaydivakaran.com/fastsnmpy"""
 
-""" EXAMPLE CODE   
 
 if __name__ == "__main__":
     #clients and Oids
-    hosts =['sny-j1']
+    hosts =['c7200-2']
     oids = ['ifDescr']
 
     newsession = SnmpSession ( targets = hosts, 
@@ -180,7 +178,6 @@ if __name__ == "__main__":
             )
 #    results = newsession.bulkwalk()   # For seqwalk -default
     results = newsession.multiwalk(mode = 'bulkwalk')
-    for identifier,eachline in results.iteritems():
-        print identifier,eachline.tag,eachline.iid,eachline.val
+    for vb in results:
+        print vb.__dict__
 
-    EXAMPLE CODE ENDS """
