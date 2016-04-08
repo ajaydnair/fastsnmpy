@@ -19,12 +19,12 @@ snmpbulkwalk operations for a much quicker run.
 
 if __name__ == '__main__':
 
-    hosts =['c7200-2','c7200-1','c2600-1','c2600-2']
-    oids = ['ifDescr', 'ifIndex', 'ifName', 'ifDescr']
+    hosts =['localhost']
+    oids = ['.1.3.6.1.2.1.1.9.1']
 
     newsession = SnmpSession ( targets = hosts,
         oidlist = oids,
-        community='oznet'
+        community='public'
     )
 
 #    print newsession.snmpwalk(workers=5)  # For snmpwalk -default
