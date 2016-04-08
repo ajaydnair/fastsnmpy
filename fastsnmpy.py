@@ -122,7 +122,8 @@ def worker_snmpbulkwalk(entity):
     mysession = netsnmp.Session(
         Version = entity['version'],
         DestHost = target,
-        Community = entity['community']
+        Community = entity['community'],
+        UseNumeric = 1,
     )
         
     results = []
@@ -137,7 +138,7 @@ def worker_snmpbulkwalk(entity):
         result = mysession.getbulk(0,maxreps,vars)
 
         for i in vars:
-            if i.tag == thistree:
+            if i.tag == thistree[:len(i.tag)]:
                 i.hostname = target
                 i.oid = oid
                 results.append(i)
