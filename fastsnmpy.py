@@ -30,7 +30,7 @@ PROVIDES METHODS:
 
 import netsnmp
 from multiprocessing import Queue, Pool
-import json
+import simplejson as json
 
 
 # -------
@@ -81,7 +81,7 @@ class SnmpSession:
         in_list = self._build_input_list()
         out_q = Queue() 
 
-        print 'Starting worker pool with %s processes' %int(processes)
+        print('Starting worker pool with %s processes' %int(processes))
         worker_pool = Pool(processes = int(processes))
         worker_pool.map_async(mode, in_list, callback=out_q.put)
         worker_pool.close()
@@ -118,7 +118,7 @@ def worker_snmpbulkwalk(entity):
     oid = entity['oid']
     maxreps = entity['maxreps']
 
-    print 'Getting %s from %s ' %(oid,target)
+    print('Getting %s from %s ' %(oid,target))
     mysession = netsnmp.Session(
         Version = entity['version'],
         DestHost = target,
@@ -172,7 +172,7 @@ def worker_snmpwalk(entity):
     target = entity['target']
     oid = entity['oid']
 
-    print 'Getting %s from %s ' %(oid,target)
+    print('Getting %s from %s ' %(oid,target))
 
     mysession = netsnmp.Session(
         Version = entity['version'],
@@ -221,9 +221,9 @@ if __name__ == '__main__':
         community='oznet' 
     )
 
-    print newsession.snmpwalk(workers=5)  # For snmpwalk -default
+    print(newsession.snmpwalk(workers=5))  # For snmpwalk -default
 
-    print newsession.snmpbulkwalk() # Fastsnmpy - bulkwalk
+    print(newsession.snmpbulkwalk()) # Fastsnmpy - bulkwalk
 
 '''
 
