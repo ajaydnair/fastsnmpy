@@ -11,7 +11,7 @@ By leveraging the getbulk method, this module provides a quick
 snmpbulkwalk utility.
 
     name      = 'fastsnmpy',
-    version     = '1.2.1',
+    version     = '1.2.3',
     py_modules   = ['fastsnmpy','example'],
     author     = 'Ajay Divakaran',
     author_email  = 'ajaysdesk@gmail.com'
@@ -28,6 +28,7 @@ PROVIDES METHODS:
 # IMPORTS
 # -------
 
+from __future__ import print_function
 import netsnmp
 from multiprocessing import Queue, Pool
 import simplejson as json
