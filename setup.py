@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
         name            = 'fastsnmpy2',
-        version         = '1.2.1',
+        version         = '1.2.3',
         py_modules      = ['fastsnmpy','example'],
         author          = 'Ajay Divakaran',
         author_email    = 'ajaysdesk@gmail.com',
@@ -21,7 +21,7 @@ creating a wrapper around the GetBulk method instead, and maintaining
 state while traversing the oid-tree, fastsnmpy provides a clever 
 solution to bulkwalk oids much faster.
 
-It provides the following methods as of Fastsnmpy-1.2.1
+It provides the following methods as of Fastsnmpy-1.2.3
 
 - snmpwalk(): Native python-bindings distributed with
   net-snmp, combined with fastsnmpy's ability to parallelize

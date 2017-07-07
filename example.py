@@ -1,3 +1,4 @@
+from __future__ import print_function
 from fastsnmpy import SnmpSession
 
 '''
@@ -27,7 +28,7 @@ if __name__ == '__main__':
         community='public'
     )
 
-#    print newsession.snmpwalk(workers=5)  # For snmpwalk -default
+#    print(newsession.snmpwalk(workers=5))  # For snmpwalk -default
 
-    print newsession.snmpbulkwalk(workers=15) # Fastsnmpy - bulkwalk
+    print(newsession.snmpbulkwalk(workers=15)) # Fastsnmpy - bulkwalk
 
