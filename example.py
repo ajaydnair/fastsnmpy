@@ -26,9 +26,13 @@ if __name__ == '__main__':
     newsession = SnmpSession (
         targets = hosts,
         oidlist = oids,
+        maxreps = 30,
         community='public'
     )
 
 #    print(newsession.snmpwalk(workers=5))  # For snmpwalk -default
 
     print(newsession.snmpbulkwalk(workers=15)) # Fastsnmpy - bulkwalk
+
+    # Results summary in snmp-esque text format
+    print(newsession.get_results_snmp())

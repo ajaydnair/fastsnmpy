@@ -87,8 +87,27 @@ class SnmpSession:
         worker_pool.close()
         worker_pool.join()
 
-        return _parse_results(out_q)
+        for vb_list in out_q.get():
+            for vb in vb_list:
+                self.results.append(vb.__dict__)
 
+        return self.get_results_json()
+
+    def get_results_json(self):
+        return json.dumps(self.results, indent=2)
+
+    def get_results_snmp(self):
+        results = []
+        for vb in self.results:
+            results.append(
+                vb['tag']
+                + ' = '
+                + vb['type']
+                + ': '
+                + vb['val'].decode('utf-8')
+                + "\n"
+            )
+        return ''.join(results)
 
     def _build_input_list(self):
 
@@ -127,38 +146,42 @@ def worker_snmpbulkwalk(entity):
     )
 
     results = []
+    tagscollected = []
 
     # Start from ifindex 0, and use getbulk operations
     startindex = 0
 
     thistree = oid
-    while (thistree == oid):
+    while (oid in thistree
+           and not thistree in tagscollected):
 
-        vars = netsnmp.VarList(netsnmp.Varbind(oid,startindex))
+        vars = netsnmp.VarList(netsnmp.Varbind(oid))
         result = mysession.getbulk(0,maxreps,vars)
 
         for i in vars:
-            if i.tag == thistree[:len(i.tag)]:
+            # print("DEBUG: %s .%s" % (i.tag,i.iid))
+            if thistree in i.tag:
                 i.hostname = target
                 i.oid = oid
+                i.tag = "%s.%s" % (i.tag, i.iid)
+                tagscollected.append(i.tag)
                 results.append(i)
 
         # If startindex is null ( Bug Fix )
         if not vars[-1].iid: break
 
         # Refresh thistree name and increment startindex
-        else:
-            thistree = vars[-1].tag
-            startindex = int(vars[-1].iid)
+        thistree = vars[-1].tag
+        startindex = int(vars[-1].iid)
 
         # If startindex still 0 ( Bug Fix for 6500s )
         if startindex == 0 : break
 
-        # -- Format and returns result
-        for i in vars:
-            i.hostname = target
-            i.oid = oid
-            results.append(i)
+        # # -- Format and returns result
+        # for i in vars:
+        #     i.hostname = target
+        #     i.oid = oid
+        #     results.append(i)
 
     return results
 
@@ -177,10 +200,11 @@ def worker_snmpwalk(entity):
     mysession = netsnmp.Session(
         Version = entity['version'],
         DestHost = target,
-        Community = entity['community']
+        Community = entity['community'],
+        UseNumeric = 1,
     )
 
-    vars = netsnmp.VarList( netsnmp.Varbind(oid))
+    vars = netsnmp.VarList(netsnmp.Varbind(oid))
     result = mysession.walk(vars)
 
     # -- Format and returns result
@@ -188,20 +212,10 @@ def worker_snmpwalk(entity):
     for i in vars:
         i.hostname = target
         i.oid = oid
+        i.tag = "%s.%s" % (i.tag, i.iid)
         results.append(i)
 
     return results
-
-
-def _parse_results(q):
-
-    results = []
-
-    for vb_list in q.get():
-        for vb in vb_list:
-           results.append(vb.__dict__)
-
-    return json.dumps(results, indent=2)
 
 
 '''
