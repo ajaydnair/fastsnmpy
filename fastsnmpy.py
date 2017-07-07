@@ -1,13 +1,12 @@
-
-''' 
+'''
 
 fastsnmpy is a collection of classes that greatly increase
 the speed of snmp discovery, providing methods like snmpbulkwalk
-and multiwalk (for multiprocess snmp). 
+and multiwalk (for multiprocess snmp).
 
-snmpbulkwalk is not a feature 
+snmpbulkwalk is not a feature
 of the python-bindings that come with net-snmp as of this release.
-By leveraging the getbulk method, this module provides a quick 
+By leveraging the getbulk method, this module provides a quick
 snmpbulkwalk utility.
 
     name      = 'fastsnmpy',
@@ -16,7 +15,7 @@ snmpbulkwalk utility.
     author     = 'Ajay Divakaran',
     author_email  = 'ajaysdesk@gmail.com'
     url       = 'http://www.ajaydivakaran.com/fastsnmpy',
-    description   = 'Superfast snmp bulkwalk method 
+    description   = 'Superfast snmp bulkwalk method
         implemented using net-snmp bindings for getbulk'
 
 PROVIDES METHODS:
@@ -40,7 +39,7 @@ import simplejson as json
 
 class SnmpSession:
 
-    ''' The main snmpsession class gets defined here. You may 
+    ''' The main snmpsession class gets defined here. You may
     later call one of the several methods defined on this class'''
 
     def __init__(self,
@@ -50,9 +49,9 @@ class SnmpSession:
         community = 'public',
         maxreps = 8,):
 
-        self.oidlist = oidlist    
+        self.oidlist = oidlist
         self.version = version
-        self.targets = targets 
+        self.targets = targets
         self.community = community
         self.maxreps = maxreps
         self.results = []
@@ -60,18 +59,18 @@ class SnmpSession:
 
     def snmpwalk(self, workers = 1):
 
-        ''' This is the most basic walk. It runs the default 
+        ''' This is the most basic walk. It runs the default
         snmpwalk from netsnmp's python bindings '''
 
         return self._run_queries( worker_snmpwalk, workers )
 
-       
+
     def snmpbulkwalk(self, workers = 1):
 
         ''' Bulkwalk is essentially a series of getBulk operations, just
         like walk is a series of get(getNext) operations.
 
-        This is where the power and speed of fastsnmpy shows, as native 
+        This is where the power and speed of fastsnmpy shows, as native
         net-snmp bindings have no equivalent'''
 
         return self._run_queries( worker_snmpbulkwalk, workers )
@@ -80,7 +79,7 @@ class SnmpSession:
     def _run_queries(self, mode, processes):
 
         in_list = self._build_input_list()
-        out_q = Queue() 
+        out_q = Queue()
 
         print('Starting worker pool with %s processes' %int(processes))
         worker_pool = Pool(processes = int(processes))
@@ -94,15 +93,15 @@ class SnmpSession:
     def _build_input_list(self):
 
         in_q = []
- 
+
         for target in self.targets:
             for oid in self.oidlist:
                 entity = { 'target':target, 'oid':oid, 'version':self.version,
                     'community':self.community, 'maxreps':self.maxreps }
                 in_q.append(entity)
-       
+
         return in_q
-    
+
 
 
 # ---------
@@ -126,7 +125,7 @@ def worker_snmpbulkwalk(entity):
         Community = entity['community'],
         UseNumeric = 1,
     )
-        
+
     results = []
 
     # Start from ifindex 0, and use getbulk operations
@@ -180,7 +179,7 @@ def worker_snmpwalk(entity):
         DestHost = target,
         Community = entity['community']
     )
-        
+
     vars = netsnmp.VarList( netsnmp.Varbind(oid))
     result = mysession.walk(vars)
 
@@ -209,7 +208,7 @@ def _parse_results(q):
 EXAMPLE :
 Actual code begins below this line. The classes above dont need
 to be modified. They can just be copied and pasted .
-Installation is a much cleaner way though. 
+Installation is a much cleaner way though.
 You can see the documentation at http://www.ajaydivakaran.com/fastsnmpy
 
 if __name__ == '__main__':
@@ -217,9 +216,9 @@ if __name__ == '__main__':
     hosts =['c7200-2','c7200-1','c2600-1','c2600-2']
     oids = ['ifDescr', 'ifIndex', 'ifName', 'ifDescr']
 
-    newsession = SnmpSession ( targets = hosts, 
+    newsession = SnmpSession ( targets = hosts,
         oidlist = oids,
-        community='oznet' 
+        community='oznet'
     )
 
     print(newsession.snmpwalk(workers=5))  # For snmpwalk -default
@@ -227,4 +226,3 @@ if __name__ == '__main__':
     print(newsession.snmpbulkwalk()) # Fastsnmpy - bulkwalk
 
 '''
-
